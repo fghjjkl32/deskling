@@ -50,4 +50,44 @@ final class UnixSocketTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(received.count, 1000)
         XCTAssertLessThan(received.count, 6000)
     }
+
+    private func makePipe() -> (read: Int32, write: Int32) {
+        var fds: [Int32] = [0, 0]
+        XCTAssertEqual(pipe(&fds), 0)
+        return (fds[0], fds[1])
+    }
+
+    func testReadUntilEOFReturnsAllDataAfterClose() {
+        let p = makePipe()
+        defer { close(p.read) }
+        _ = write(p.write, "hello", 5)
+        close(p.write)
+        XCTAssertEqual(UnixSocket.readUntilEOF(from: p.read, limit: 1024, timeout: 1), Data("hello".utf8))
+    }
+
+    func testReadUntilEOFStopsAtTimeoutWhenWriterStaysOpen() {
+        let p = makePipe()
+        defer { close(p.read); close(p.write) }
+        _ = write(p.write, "abc", 3)
+        let start = Date()
+        let data = UnixSocket.readUntilEOF(from: p.read, limit: 1024, timeout: 0.2)
+        XCTAssertEqual(data, Data("abc".utf8))
+        XCTAssertLessThan(Date().timeIntervalSince(start), 0.3)
+    }
+
+    func testReadUntilEOFNeverReturnsMoreThanLimit() {
+        let p = makePipe()
+        defer { close(p.read) }
+        _ = write(p.write, [UInt8](repeating: 0x41, count: 5000), 5000)
+        close(p.write)
+        XCTAssertEqual(UnixSocket.readUntilEOF(from: p.read, limit: 1000, timeout: 1).count, 1000)
+    }
+
+    func testReadUntilEOFReturnsEmptyForInvalidDescriptor() {
+        XCTAssertEqual(UnixSocket.readUntilEOF(from: -1, limit: 1024, timeout: 0.2), Data())
+        let p = makePipe()
+        close(p.read)
+        close(p.write)
+        XCTAssertEqual(UnixSocket.readUntilEOF(from: p.read, limit: 1024, timeout: 0.2), Data())
+    }
 }

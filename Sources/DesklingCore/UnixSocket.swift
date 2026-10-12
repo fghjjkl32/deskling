@@ -66,4 +66,33 @@ public enum UnixSocket {
         }
         return data
     }
+
+    /// Reads until EOF, `limit` bytes, or `timeout` seconds in total, whichever comes first.
+    /// Any error (including an invalid descriptor) ends the read and returns what was collected.
+    public static func readUntilEOF(from fd: Int32, limit: Int, timeout: TimeInterval) -> Data {
+        var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        let deadline = DispatchTime.now().uptimeNanoseconds + UInt64(max(0, timeout) * 1_000_000_000)
+        while data.count < limit {
+            let now = DispatchTime.now().uptimeNanoseconds
+            if now >= deadline { break }
+            let remainingMs = Int32(min((deadline - now) / 1_000_000 + 1, 60_000))
+            var descriptor = pollfd(fd: fd, events: Int16(POLLIN), revents: 0)
+            let ready = poll(&descriptor, 1, remainingMs)
+            if ready < 0 {
+                if errno == EINTR { continue }
+                break
+            }
+            if ready == 0 { break }
+            if descriptor.revents & Int16(POLLNVAL) != 0 { break }
+            let count = read(fd, &buffer, min(buffer.count, limit - data.count))
+            if count < 0 {
+                if errno == EINTR || errno == EAGAIN { continue }
+                break
+            }
+            if count == 0 { break }
+            data.append(buffer, count: count)
+        }
+        return data
+    }
 }
