@@ -27,7 +27,7 @@ final class HookSettingsTests: XCTestCase {
         let root = try object(HookSettings.install(into: input, hookPath: hookPath))
         XCTAssertEqual(root["model"] as? String, "opus")
         XCTAssertEqual(commands(root, "Stop"), ["say done", "\"\(hookPath)\" Stop"])
-        XCTAssertEqual(commands(root, "PostToolUse"), ["fmt"])
+        XCTAssertEqual(commands(root, "PostToolUse"), ["fmt", "\"\(hookPath)\" PostToolUse"])
     }
 
     func testInstallTwiceDoesNotDuplicate() throws {
@@ -85,5 +85,14 @@ final class HookSettingsTests: XCTestCase {
     func testManualSnippetIsValidJSONWithAllEvents() throws {
         let root = try object(Data(HookSettings.manualSnippet(hookPath: hookPath).utf8))
         XCTAssertEqual((root["hooks"] as? [String: Any])?.count, HookEvent.Kind.allCases.count)
+    }
+
+    func testInstallsSevenEventsAndUninstallRemovesAll() throws {
+        XCTAssertEqual(HookEvent.Kind.allCases.count, 7)
+        let installed = try HookSettings.install(into: nil, hookPath: hookPath)
+        XCTAssertEqual((try object(installed)["hooks"] as? [String: Any])?.count, 7)
+        XCTAssertNotNil((try object(installed)["hooks"] as? [String: Any])?["PostToolUse"])
+        let removed = try HookSettings.uninstall(from: installed)
+        XCTAssertNil(try object(removed)["hooks"])
     }
 }

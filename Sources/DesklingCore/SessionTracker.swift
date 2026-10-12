@@ -44,23 +44,23 @@ public struct SessionTracker {
         var session = sessions[event.sessionID] ?? Session(lastEvent: now)
         session.lastEvent = now
         if let name = event.projectName { session.projectName = name }
-        if !event.isIdlePrompt {
-            switch event.kind {
-            case .sessionStart:
-                session.state = .idle
-                session.message = nil
-            case .userPromptSubmit, .preToolUse:
-                session.state = .working
-                session.message = nil
-            case .notification:
+        switch event.kind {
+        case .sessionStart:
+            session.state = .idle
+            session.message = nil
+        case .userPromptSubmit, .preToolUse, .postToolUse:
+            session.state = .working
+            session.message = nil
+        case .notification:
+            if event.requestsAttention {
                 session.state = .waiting
                 session.message = event.message
-            case .stop:
-                session.state = .done
-                session.message = nil
-            case .sessionEnd:
-                break
             }
+        case .stop:
+            session.state = .done
+            session.message = nil
+        case .sessionEnd:
+            break
         }
         sessions[event.sessionID] = session
     }

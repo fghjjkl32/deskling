@@ -5,6 +5,7 @@ public struct HookEvent: Equatable {
         case sessionStart = "SessionStart"
         case userPromptSubmit = "UserPromptSubmit"
         case preToolUse = "PreToolUse"
+        case postToolUse = "PostToolUse"
         case notification = "Notification"
         case stop = "Stop"
         case sessionEnd = "SessionEnd"
@@ -38,6 +39,16 @@ public struct HookEvent: Equatable {
         guard kind == .notification else { return false }
         if notificationType == "idle_prompt" { return true }
         return message?.localizedCaseInsensitiveContains("waiting for your input") ?? false
+    }
+
+    /// Only permission and input requests need the user. Other notifications (idle, auth success, unknown types) do not.
+    public var requestsAttention: Bool {
+        guard kind == .notification else { return false }
+        switch notificationType {
+        case "permission_prompt", "elicitation_dialog": return true
+        case nil: return !isIdlePrompt
+        default: return false
+        }
     }
 
     public static func parse(line: Data) -> HookEvent? {

@@ -53,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let server = EventServer { [weak self] event in
             guard let self else { return }
             self.tracker.apply(event, at: Date())
-            if event.kind == .notification || event.kind == .stop { self.bubble.clearDismissal() }
+            if event.requestsAttention || event.kind == .stop { self.bubble.clearDismissal() }
             self.render()
         }
         if !server.start(path: AppPaths.socketPath()) {

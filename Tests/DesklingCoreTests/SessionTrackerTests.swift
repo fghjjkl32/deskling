@@ -91,4 +91,44 @@ final class SessionTrackerTests: XCTestCase {
         tracker.apply(event(.stop, cwd: nil), at: start)
         XCTAssertEqual(tracker.display.projectName, "app")
     }
+
+    func testPostToolUseReturnsWaitingSessionToWorking() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.notification, message: "Need permission", type: "permission_prompt"), at: start)
+        XCTAssertEqual(tracker.display.state, .waiting)
+        tracker.apply(event(.postToolUse), at: start)
+        XCTAssertEqual(tracker.display, PetDisplay(state: .working, projectName: "app", message: nil))
+    }
+
+    func testOtherNotificationTypesLeaveStateUnchanged() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.userPromptSubmit), at: start)
+        tracker.apply(event(.notification, message: "signed in", type: "auth_success"), at: start)
+        XCTAssertEqual(tracker.display.state, .working)
+        tracker.apply(event(.notification, message: "?", type: "something_new"), at: start)
+        XCTAssertEqual(tracker.display.state, .working)
+    }
+
+    func testAttentionNotificationTypesSetWaiting() {
+        for type in ["permission_prompt", "elicitation_dialog", nil] {
+            var tracker = SessionTracker()
+            tracker.apply(event(.userPromptSubmit), at: start)
+            tracker.apply(event(.notification, message: "Question", type: type), at: start)
+            XCTAssertEqual(tracker.display, PetDisplay(state: .waiting, projectName: "app", message: "Question"), String(describing: type))
+        }
+    }
+
+    func testIdlePromptKeepsWaitingState() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.notification, message: "Need permission", type: "permission_prompt"), at: start)
+        tracker.apply(event(.notification, message: "Claude is waiting for your input", type: "idle_prompt"), at: start.addingTimeInterval(60))
+        XCTAssertEqual(tracker.display, PetDisplay(state: .waiting, projectName: "app", message: "Need permission"))
+    }
+
+    func testIdleTextWithoutTypeDoesNotRequestAttention() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.userPromptSubmit), at: start)
+        tracker.apply(event(.notification, message: "Claude is waiting for your input"), at: start)
+        XCTAssertEqual(tracker.display.state, .working)
+    }
 }
