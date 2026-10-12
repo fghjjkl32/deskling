@@ -81,4 +81,35 @@ final class HookInstallerTests: XCTestCase {
         XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeSymbolicLink)
         XCTAssertTrue(HookSettings.isInstalled(in: try Data(contentsOf: realURL)))
     }
+
+    func testSecondConnectKeepsOriginalBackup() throws {
+        try writeSettings(#"{"model":"opus"}"#)
+        try installer.connect()
+        try installer.connect()
+        XCTAssertEqual(try String(contentsOf: installer.backupURL, encoding: .utf8), #"{"model":"opus"}"#)
+    }
+
+    func testSecondConnectDoesNotTouchExistingBackup() throws {
+        try writeSettings(#"{"model":"opus"}"#)
+        try installer.connect()
+        try Data("marker".utf8).write(to: installer.backupURL)
+        try installer.connect()
+        XCTAssertEqual(try String(contentsOf: installer.backupURL, encoding: .utf8), "marker")
+    }
+
+    func testDisconnectWithoutOurHooksLeavesFileByteIdentical() throws {
+        let text = #"{"z":1,   "a":2}"#
+        try writeSettings(text)
+        try installer.disconnect()
+        XCTAssertEqual(try String(contentsOf: settingsURL, encoding: .utf8), text)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: installer.backupURL.path))
+    }
+
+    func testDisconnectInvalidFileThrowsAndLeavesItUntouched() throws {
+        try writeSettings("{ broken")
+        XCTAssertThrowsError(try installer.disconnect()) {
+            XCTAssertEqual($0 as? HookSettings.SettingsError, .invalidJSON)
+        }
+        XCTAssertEqual(try String(contentsOf: settingsURL, encoding: .utf8), "{ broken")
+    }
 }

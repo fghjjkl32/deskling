@@ -38,14 +38,18 @@ public struct HookInstaller {
         let existing: Data? = manager.fileExists(atPath: settingsURL.path) ? try Data(contentsOf: settingsURL) : nil
         let merged = try HookSettings.install(into: existing, hookPath: installedHookURL.path)
         try copyHelper()
-        if let existing { try existing.write(to: backupURL, options: .atomic) }
+        if let existing, !HookSettings.isInstalled(in: existing) {
+            try existing.write(to: backupURL, options: .atomic)
+        }
         try manager.createDirectory(at: writeURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try merged.write(to: writeURL, options: .atomic)
     }
 
     public func disconnect() throws {
         guard FileManager.default.fileExists(atPath: settingsURL.path) else { return }
-        let stripped = try HookSettings.uninstall(from: try Data(contentsOf: settingsURL))
+        let existing = try Data(contentsOf: settingsURL)
+        let stripped = try HookSettings.uninstall(from: existing)
+        guard HookSettings.isInstalled(in: existing) else { return }
         try stripped.write(to: writeURL, options: .atomic)
     }
 }
