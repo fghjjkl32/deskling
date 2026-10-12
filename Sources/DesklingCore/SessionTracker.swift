@@ -18,6 +18,16 @@ public struct PetDisplay: Equatable {
     }
 }
 
+public struct SessionSummary: Equatable {
+    public let projectName: String?
+    public let state: PetState
+
+    public init(projectName: String?, state: PetState) {
+        self.projectName = projectName
+        self.state = state
+    }
+}
+
 public struct SessionTracker {
     public static let doneDuration: TimeInterval = 5
     public static let workingTimeout: TimeInterval = 600
@@ -82,5 +92,18 @@ public struct SessionTracker {
         let top = sessions.values.max { ($0.state, $0.lastEvent) < ($1.state, $1.lastEvent) }
         guard let top else { return PetDisplay(state: .idle, projectName: nil, message: nil) }
         return PetDisplay(state: top.state, projectName: top.projectName, message: top.message)
+    }
+
+    /// The session that finished most recently and is still "done", whatever the other sessions are doing.
+    public var justFinished: PetDisplay? {
+        let finished = sessions.values.filter { $0.state == .done }.max { $0.lastEvent < $1.lastEvent }
+        return finished.map { PetDisplay(state: .done, projectName: $0.projectName, message: nil) }
+    }
+
+    /// Every tracked session, most urgent state first and most recent first within a state.
+    public var summaries: [SessionSummary] {
+        sessions.values
+            .sorted { ($0.state, $0.lastEvent) > ($1.state, $1.lastEvent) }
+            .map { SessionSummary(projectName: $0.projectName, state: $0.state) }
     }
 }

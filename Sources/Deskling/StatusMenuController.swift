@@ -9,6 +9,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
 
     struct State {
         var connected: Bool
+        var sessions: [SessionSummary]
         var skins: [SkinItem]
         var selectedSkinPath: String?
         var scale: Double
@@ -56,10 +57,17 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         let actions = self.actions
         menu.removeAllItems()
 
-        let status = NSMenuItem(title: text(current.connected ? .statusConnected : .statusNotConnected), action: nil, keyEquivalent: "")
-        status.isEnabled = false
-        menu.addItem(status)
+        addLabel(to: menu, text(current.connected ? .statusConnected : .statusNotConnected))
         add(to: menu, text(current.connected ? .disconnect : .connect), actions.toggleConnection)
+        menu.addItem(.separator())
+
+        addLabel(to: menu, text(.sessions))
+        if current.sessions.isEmpty {
+            addLabel(to: menu, text(.noSessions), indented: true)
+        }
+        for session in current.sessions {
+            addLabel(to: menu, PetPresentation.sessionLine(for: session, language: language), indented: true)
+        }
         menu.addItem(.separator())
 
         let skinMenu = NSMenu()
@@ -92,6 +100,13 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         item.target = self
         item.representedObject = Handler(handler)
         item.state = checked ? .on : .off
+        menu.addItem(item)
+    }
+
+    private func addLabel(to menu: NSMenu, _ title: String, indented: Bool = false) {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.indentationLevel = indented ? 1 : 0
         menu.addItem(item)
     }
 

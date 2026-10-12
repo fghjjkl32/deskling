@@ -73,4 +73,15 @@ final class StringsTests: XCTestCase {
         let bubble = PetPresentation.bubble(for: PetDisplay(state: .done, projectName: name, message: nil), language: .english)
         XCTAssertEqual(bubble?.components(separatedBy: "\n").first, String(repeating: "p", count: 40) + "…")
     }
+
+    func testSessionLine() {
+        XCTAssertEqual(
+            PetPresentation.sessionLine(for: SessionSummary(projectName: "app", state: .working), language: .korean),
+            "app — 작업 중"
+        )
+        XCTAssertEqual(
+            PetPresentation.sessionLine(for: SessionSummary(projectName: nil, state: .waiting), language: .english),
+            "Unnamed — Waiting for input"
+        )
+    }
 }

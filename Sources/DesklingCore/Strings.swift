@@ -14,6 +14,7 @@ public enum Text: CaseIterable {
     case size, sizeSmall, sizeMedium, sizeLarge
     case showBubbles, hidePet, showPet, launchAtLogin, quit
     case waitingFallback, doneMessage
+    case sessions, noSessions, unnamedProject, stateIdle, stateWorking, stateWaiting, stateDone
     case invalidSettingsTitle, invalidSettingsBody, copy, close
     case connectFailed, loginItemFailed, missingResources
 
@@ -41,6 +42,13 @@ public enum Text: CaseIterable {
         .quit: ("종료하기", "Quit Deskling"),
         .waitingFallback: ("입력을 기다리고 있습니다.", "Waiting for your input."),
         .doneMessage: ("작업을 마쳤습니다.", "Finished working."),
+        .sessions: ("세션", "Sessions"),
+        .noSessions: ("세션 없음", "No sessions"),
+        .unnamedProject: ("이름 없음", "Unnamed"),
+        .stateIdle: ("쉬는 중", "Idle"),
+        .stateWorking: ("작업 중", "Working"),
+        .stateWaiting: ("입력 대기", "Waiting for input"),
+        .stateDone: ("작업 완료", "Finished"),
         .invalidSettingsTitle: ("settings.json을 읽을 수 없습니다.", "Could not read settings.json."),
         .invalidSettingsBody: (
             "파일을 수정하지 않았습니다. 아래 설정을 settings.json에 직접 추가해야 합니다.",
@@ -80,6 +88,18 @@ public enum PetPresentation {
         }
         guard let project = display.projectName, !project.isEmpty else { return body }
         return "\(truncate(project, limit: maxProjectLength))\n\(body)"
+    }
+
+    public static func sessionLine(for summary: SessionSummary, language: Language) -> String {
+        let state: Text
+        switch summary.state {
+        case .idle: state = .stateIdle
+        case .working: state = .stateWorking
+        case .waiting: state = .stateWaiting
+        case .done: state = .stateDone
+        }
+        let project = summary.projectName.flatMap { $0.isEmpty ? nil : $0 } ?? Text.unnamedProject.string(language)
+        return "\(truncate(project, limit: maxProjectLength)) — \(state.string(language))"
     }
 
     private static func collapseWhitespace(_ text: String) -> String {

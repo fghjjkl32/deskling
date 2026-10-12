@@ -131,4 +131,37 @@ final class SessionTrackerTests: XCTestCase {
         tracker.apply(event(.notification, message: "Claude is waiting for your input"), at: start)
         XCTAssertEqual(tracker.display.state, .working)
     }
+
+    func testJustFinishedIsReportedWhileAnotherSessionWorks() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.preToolUse, "a", cwd: "/w/a"), at: start)
+        XCTAssertNil(tracker.justFinished)
+        tracker.apply(event(.stop, "b", cwd: "/w/b"), at: start)
+        XCTAssertEqual(tracker.display.state, .working)
+        XCTAssertEqual(tracker.justFinished, PetDisplay(state: .done, projectName: "b", message: nil))
+        tracker.tick(at: start.addingTimeInterval(SessionTracker.doneDuration))
+        XCTAssertNil(tracker.justFinished)
+    }
+
+    func testJustFinishedPrefersTheLatestSession() {
+        var tracker = SessionTracker()
+        tracker.apply(event(.stop, "a", cwd: "/w/a"), at: start)
+        tracker.apply(event(.stop, "b", cwd: "/w/b"), at: start.addingTimeInterval(1))
+        XCTAssertEqual(tracker.justFinished?.projectName, "b")
+    }
+
+    func testSummariesListMostUrgentAndRecentFirst() {
+        var tracker = SessionTracker()
+        XCTAssertEqual(tracker.summaries, [])
+        tracker.apply(event(.sessionStart, "a", cwd: "/w/a"), at: start)
+        tracker.apply(event(.preToolUse, "b", cwd: "/w/b"), at: start)
+        tracker.apply(event(.preToolUse, "c", cwd: "/w/c"), at: start.addingTimeInterval(1))
+        tracker.apply(event(.notification, "d", cwd: "/w/d", message: "m"), at: start)
+        XCTAssertEqual(tracker.summaries, [
+            SessionSummary(projectName: "d", state: .waiting),
+            SessionSummary(projectName: "c", state: .working),
+            SessionSummary(projectName: "b", state: .working),
+            SessionSummary(projectName: "a", state: .idle),
+        ])
+    }
 }

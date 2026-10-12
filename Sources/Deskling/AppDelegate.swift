@@ -82,7 +82,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let display = tracker.display
         if display != pet.display { pet.display = display }
         let visible = preferences.bubblesEnabled && !preferences.petHidden
-        bubble.update(text: visible ? PetPresentation.bubble(for: display, language: language) : nil, anchor: pet.panel.frame)
+        // A session that just finished is announced even while other sessions keep the pet busy.
+        let spoken = tracker.justFinished ?? display
+        bubble.update(text: visible ? PetPresentation.bubble(for: spoken, language: language) : nil, anchor: pet.panel.frame)
     }
 
     private func text(_ text: Text) -> String { text.string(language) }
@@ -110,6 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let selected = userSkins.contains { $0.path == preferences.skinPath } ? preferences.skinPath : nil
         return StatusMenuController.State(
             connected: installer.isConnected,
+            sessions: tracker.summaries,
             skins: [StatusMenuController.SkinItem(path: nil, name: text(.defaultSkin))] + userSkins,
             selectedSkinPath: selected,
             scale: preferences.sizeScale,
