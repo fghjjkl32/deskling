@@ -4,6 +4,8 @@ A desktop pet for Claude Code on macOS.
 
 Deskling walks along the bottom of your screen and reacts to what Claude Code is doing. When Claude Code asks for permission or finishes a task, the pet tells you with a speech bubble, so you can look away from the terminal.
 
+Deskling lives in the menu bar. It has no Dock icon and no window; the pet and its menu are all there is.
+
 ![Deskling showing a speech bubble](docs/images/demo.png)
 
 [한국어 설명](README.ko.md)
@@ -29,16 +31,24 @@ xattr -dr com.apple.quarantine /Applications/Deskling.app
 
 Click the paw icon in the menu bar and choose **Connect to Claude Code**.
 
-Deskling adds its hooks to `~/.claude/settings.json` and leaves your other settings and hooks alone. A copy of the original file is saved as `settings.json.deskling-backup`. Choose **Disconnect** to remove the hooks again. Sessions that were already running pick up the hooks after you restart them.
+Deskling adds its hooks to `~/.claude/settings.json` and leaves your other settings and hooks alone. A copy of the original file is saved as `settings.json.deskling-backup`. Choose **Disconnect** to remove the hooks again. Connecting rewrites `settings.json` with sorted keys and standard indentation, so the formatting changes while every value is kept. Deskling reads `CLAUDE_CONFIG_DIR` only if the app was started with it in its environment, which is not the case when you open it from the Dock or Finder. Sessions that were already running pick up the hooks after you restart them.
 
 | Claude Code | Pet |
 |---|---|
 | Working on your prompt | Shows the working pose |
-| Asking for permission | Stops and shows a speech bubble |
+| Asking for permission | Stops and shows a speech bubble, which stays until Claude Code continues |
 | Finished | Celebrates and shows a speech bubble |
 | Nothing happening | Walks around and rests |
 
-Deskling listens on a Unix socket in `~/Library/Application Support/Deskling/`. It opens no network port and sends nothing anywhere.
+Click a speech bubble to dismiss it. Deskling listens on a Unix socket in `~/Library/Application Support/Deskling/`. It opens no network port and sends nothing anywhere.
+
+## Uninstall
+
+1. Choose **Disconnect** from the menu first.
+2. Choose **Quit Deskling**.
+3. Delete `Deskling.app` and the folder `~/Library/Application Support/Deskling`.
+
+If you delete the app without disconnecting, the hooks stay in `settings.json` and fail on every Claude Code event. To recover, reinstall Deskling and choose **Disconnect**, or open `settings.json` and remove every hook entry whose command contains `deskling-hook`.
 
 ## Custom skins
 
@@ -62,6 +72,8 @@ skins/my-pet/
 Then pick your skin from the **Skin** menu. Only share images you have the right to share.
 
 ## Build from source
+
+Building needs Xcode (or at least its command line tools) with Swift 5.9 or later.
 
 ```bash
 swift test

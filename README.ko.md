@@ -4,6 +4,8 @@ macOS에서 쓰는 Claude Code용 데스크톱 펫입니다.
 
 Deskling은 화면 아래를 걸어 다니다가 Claude Code의 작업 상태에 따라 동작을 바꿉니다. Claude Code가 권한을 요청하거나 작업을 마치면 말풍선으로 알려 주기 때문에, 터미널을 계속 보고 있지 않아도 됩니다.
 
+Deskling은 메뉴 막대에서 실행됩니다. Dock 아이콘과 창은 없고, 펫과 메뉴만 있습니다.
+
 ![말풍선을 보여 주는 Deskling](docs/images/demo.png)
 
 [English](README.md)
@@ -29,16 +31,24 @@ xattr -dr com.apple.quarantine /Applications/Deskling.app
 
 메뉴 막대의 발바닥 아이콘을 누르고 **Claude Code 연결하기**를 고릅니다.
 
-Deskling은 `~/.claude/settings.json`에 훅을 추가하며, 다른 설정과 기존 훅은 건드리지 않습니다. 원본 파일은 `settings.json.deskling-backup`으로 보관합니다. **연결 해제하기**를 고르면 추가한 훅만 지웁니다. 이미 실행 중이던 세션에는 다시 시작한 뒤부터 적용됩니다.
+Deskling은 `~/.claude/settings.json`에 훅을 추가하며, 다른 설정과 기존 훅은 건드리지 않습니다. 원본 파일은 `settings.json.deskling-backup`으로 보관합니다. **연결 해제하기**를 고르면 추가한 훅만 지웁니다. 연결하면 `settings.json`의 키를 정렬하고 들여쓰기를 표준 형식으로 다시 쓰므로 서식은 바뀌지만 값은 모두 그대로 유지됩니다. `CLAUDE_CONFIG_DIR`은 앱을 실행할 때 환경 변수로 전달된 경우에만 인식하며, Dock이나 Finder에서 앱을 열면 전달되지 않습니다. 이미 실행 중이던 세션에는 다시 시작한 뒤부터 적용됩니다.
 
 | Claude Code | 펫 |
 |---|---|
-| 프롬프트를 처리하는 중 | 작업 동작을 보여 줍니다. |
-| 권한을 요청하는 중 | 멈춰서 말풍선으로 알려 줍니다. |
+| 프롬프트를 처리하는 중 | 작업하는 동작을 보여 줍니다. |
+| 권한을 요청하는 중 | 멈춰 서서 말풍선으로 알려 주며, Claude Code가 다시 진행할 때까지 말풍선이 남아 있습니다. |
 | 작업 완료 | 기뻐하며 말풍선으로 알려 줍니다. |
 | 아무 일도 없음 | 걷다가 쉬기를 반복합니다. |
 
-Deskling은 `~/Library/Application Support/Deskling/` 안의 유닉스 소켓으로만 이벤트를 받습니다. 네트워크 포트를 열지 않으며 어디로도 데이터를 보내지 않습니다.
+말풍선을 누르면 말풍선이 사라집니다. Deskling은 `~/Library/Application Support/Deskling/` 안의 유닉스 소켓으로만 이벤트를 받습니다. 네트워크 포트를 열지 않으며 어디로도 데이터를 보내지 않습니다.
+
+## 삭제하기
+
+1. 먼저 메뉴에서 **연결 해제하기**를 고릅니다.
+2. **종료하기**를 고릅니다.
+3. `Deskling.app`과 `~/Library/Application Support/Deskling` 폴더를 삭제합니다.
+
+연결을 해제하지 않고 앱만 삭제하면 훅이 `settings.json`에 남아서 Claude Code의 모든 이벤트에서 실패합니다. 이 경우에는 Deskling을 다시 설치하고 **연결 해제하기**를 고르거나, `settings.json`을 열어 명령에 `deskling-hook`이 들어 있는 훅 항목을 모두 지워야 합니다.
 
 ## 스킨 직접 만들기
 
@@ -62,6 +72,8 @@ skins/내펫/
 그다음 **스킨** 메뉴에서 만든 스킨을 고릅니다. 공유할 권리가 있는 그림만 다른 사람과 공유해 주세요.
 
 ## 소스에서 빌드하기
+
+빌드하려면 Swift 5.9 이상이 들어 있는 Xcode(또는 최소한 명령줄 도구)가 필요합니다.
 
 ```bash
 swift test
