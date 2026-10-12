@@ -112,4 +112,65 @@ final class HookInstallerTests: XCTestCase {
         }
         XCTAssertEqual(try String(contentsOf: settingsURL, encoding: .utf8), "{ broken")
     }
+
+    private func hasQuarantine(_ url: URL) -> Bool {
+        getxattr(url.path, "com.apple.quarantine", nil, 0, 0, 0) >= 0
+    }
+
+    func testCopyHelperStripsQuarantineAndIsExecutable() throws {
+        XCTAssertEqual(setxattr(installer.bundledHookURL.path, "com.apple.quarantine", "0081;00000000;Safari;", 21, 0, 0), 0)
+        XCTAssertTrue(hasQuarantine(installer.bundledHookURL))
+        try installer.copyHelper()
+        XCTAssertFalse(hasQuarantine(installer.installedHookURL))
+        XCTAssertTrue(FileManager.default.isExecutableFile(atPath: installer.installedHookURL.path))
+        let mode = try FileManager.default.attributesOfItem(atPath: installer.installedHookURL.path)[.posixPermissions] as? Int
+        XCTAssertEqual(mode, 0o755)
+    }
+
+    func testCopyHelperLeavesNoTemporaryFiles() throws {
+        try installer.copyHelper()
+        try installer.copyHelper()
+        let names = try FileManager.default.contentsOfDirectory(atPath: installer.supportDirectory.path)
+        XCTAssertEqual(names, ["deskling-hook"])
+    }
+
+    func testCopyHelperFailureKeepsPreviousHelper() throws {
+        try installer.copyHelper()
+        try FileManager.default.removeItem(at: installer.bundledHookURL)
+        XCTAssertThrowsError(try installer.copyHelper())
+        XCTAssertEqual(try Data(contentsOf: installer.installedHookURL), Data("v1".utf8))
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: installer.supportDirectory.path), ["deskling-hook"])
+    }
+
+    func testBackupKeepsOriginalPermissions() throws {
+        try writeSettings(#"{"model":"opus"}"#)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: settingsURL.path)
+        try installer.connect()
+        let mode = try FileManager.default.attributesOfItem(atPath: installer.backupURL.path)[.posixPermissions] as? Int
+        XCTAssertEqual(mode, 0o600)
+    }
+
+    func testConnectWritesThroughDanglingSymlink() throws {
+        let realURL = root.appendingPathComponent("dotfiles/sub/settings.json")
+        try FileManager.default.createDirectory(at: settingsURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: settingsURL, withDestinationURL: realURL)
+
+        try installer.connect()
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: settingsURL.path)
+        XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeSymbolicLink)
+        XCTAssertTrue(HookSettings.isInstalled(in: try Data(contentsOf: realURL)))
+    }
+
+    func testConnectWritesThroughRelativeDanglingSymlink() throws {
+        try FileManager.default.createDirectory(at: settingsURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(atPath: settingsURL.path, withDestinationPath: "../elsewhere/settings.json")
+
+        try installer.connect()
+
+        let attributes = try FileManager.default.attributesOfItem(atPath: settingsURL.path)
+        XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeSymbolicLink)
+        let realURL = root.appendingPathComponent("elsewhere/settings.json")
+        XCTAssertTrue(HookSettings.isInstalled(in: try Data(contentsOf: realURL)))
+    }
 }
