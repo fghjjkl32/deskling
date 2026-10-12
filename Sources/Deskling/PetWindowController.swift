@@ -32,8 +32,8 @@ final class PetWindowController {
         self.scale = scale
         panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 96, height: 96),
                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        let screen = NSScreen.screens.first { $0.displayID == screenID } ?? NSScreen.main ?? NSScreen.screens[0]
-        let x = startX ?? Double(screen.visibleFrame.midX)
+        let screen = NSScreen.screens.first { $0.displayID == screenID } ?? NSScreen.main ?? NSScreen.screens.first
+        let x = startX ?? Double(screen?.visibleFrame.midX ?? 0)
         walk = WalkModel(x: x)
 
         panel.isOpaque = false
@@ -43,7 +43,7 @@ final class PetWindowController {
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
         panel.hidesOnDeactivate = false
         panel.contentView = view
-        panel.setFrameOrigin(NSPoint(x: x, y: Double(screen.visibleFrame.minY)))
+        panel.setFrameOrigin(NSPoint(x: x, y: Double(screen?.visibleFrame.minY ?? 0)))
 
         view.onDragBegan = { [weak self] in self?.dragging = true }
         view.onDragMoved = { [weak self] in self?.onFrameChanged?() }
@@ -52,6 +52,7 @@ final class PetWindowController {
     }
 
     func start() {
+        timer?.invalidate()
         let timer = Timer(timeInterval: Self.frameInterval, repeats: true) { [weak self] _ in
             self?.tick(Self.frameInterval)
         }
@@ -81,14 +82,14 @@ final class PetWindowController {
     }
 
     /// The screen under the pet. Falls back to the main screen when its monitor was removed.
-    private var currentScreen: NSScreen {
+    private var currentScreen: NSScreen? {
         let center = NSPoint(x: panel.frame.midX, y: panel.frame.midY)
-        return NSScreen.screens.first { $0.frame.contains(center) } ?? NSScreen.main ?? NSScreen.screens[0]
+        return NSScreen.screens.first { $0.frame.contains(center) } ?? NSScreen.main ?? NSScreen.screens.first
     }
 
     private func tick(_ dt: Double) {
-        guard !dragging, panel.isVisible else { return }
-        let visible = currentScreen.visibleFrame
+        guard !dragging, panel.isVisible, let screen = currentScreen else { return }
+        let visible = screen.visibleFrame
         let lower = Double(visible.minX)
         let bounds = lower...max(lower, Double(visible.maxX - panel.frame.width))
         if display.state == .idle {
@@ -108,7 +109,7 @@ final class PetWindowController {
         dragging = false
         walk.place(x: Double(panel.frame.minX))
         tick(0)
-        onDropped?(walk.x, currentScreen.displayID)
+        onDropped?(walk.x, currentScreen?.displayID)
     }
 
     private func refresh() {

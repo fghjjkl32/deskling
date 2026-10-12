@@ -56,6 +56,7 @@ public enum Text: CaseIterable {
 
 public enum PetPresentation {
     public static let maxMessageLength = 120
+    public static let maxProjectLength = 40
 
     public static func pose(for state: PetState, isWalking: Bool) -> PetPose {
         switch state {
@@ -72,16 +73,20 @@ public enum PetPresentation {
         case .idle, .working:
             return nil
         case .waiting:
-            let message = display.message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let message = collapseWhitespace(display.message ?? "")
             body = message.isEmpty ? Text.waitingFallback.string(language) : truncate(message)
         case .done:
             body = Text.doneMessage.string(language)
         }
         guard let project = display.projectName, !project.isEmpty else { return body }
-        return "\(project)\n\(body)"
+        return "\(truncate(project, limit: maxProjectLength))\n\(body)"
     }
 
-    private static func truncate(_ message: String) -> String {
-        message.count > maxMessageLength ? String(message.prefix(maxMessageLength)) + "…" : message
+    private static func collapseWhitespace(_ text: String) -> String {
+        text.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+    }
+
+    private static func truncate(_ message: String, limit: Int = maxMessageLength) -> String {
+        message.count > limit ? String(message.prefix(limit)) + "…" : message
     }
 }

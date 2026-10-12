@@ -14,6 +14,7 @@ final class PetView: NSView {
         super.init(frame: frameRect)
         wantsLayer = true
         spriteLayer.contentsGravity = .resizeAspect
+        spriteLayer.minificationFilter = .trilinear
         layer?.addSublayer(spriteLayer)
     }
 

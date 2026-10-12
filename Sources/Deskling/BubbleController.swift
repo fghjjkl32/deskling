@@ -2,10 +2,13 @@ import AppKit
 
 private final class BubbleView: NSView {
     var onClick: (() -> Void)?
+    /// Clicks before this time are ignored, so one already on its way cannot dismiss a bubble nobody has seen.
+    var ignoreClicksUntil: Date = .distantPast
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func mouseDown(with event: NSEvent) {
+        guard Date() >= ignoreClicksUntil else { return }
         onClick?()
     }
 
@@ -21,6 +24,7 @@ final class BubbleController {
     private static let maxTextWidth: CGFloat = 260
     private static let padding: CGFloat = 12
     private static let gap: CGFloat = 6
+    private static let clickGuard: TimeInterval = 0.5
 
     private let panel: NSPanel
     private let container = BubbleView()
@@ -66,6 +70,9 @@ final class BubbleController {
         }
         if text == dismissedText { return }
         dismissedText = nil
+        if text != shownText || !panel.isVisible {
+            container.ignoreClicksUntil = Date().addingTimeInterval(Self.clickGuard)
+        }
         if text != shownText {
             shownText = text
             label.stringValue = text

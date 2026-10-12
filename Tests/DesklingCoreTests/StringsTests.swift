@@ -62,4 +62,15 @@ final class StringsTests: XCTestCase {
         XCTAssertEqual(bubble?.count, PetPresentation.maxMessageLength + 1)
         XCTAssertEqual(bubble?.last, "…")
     }
+
+    func testBubbleCollapsesWhitespaceBeforeTruncating() {
+        let display = PetDisplay(state: .waiting, projectName: nil, message: "Run\n\n  this   command\t now")
+        XCTAssertEqual(PetPresentation.bubble(for: display, language: .english), "Run this command now")
+    }
+
+    func testBubbleTruncatesLongProjectName() {
+        let name = String(repeating: "p", count: 60)
+        let bubble = PetPresentation.bubble(for: PetDisplay(state: .done, projectName: name, message: nil), language: .english)
+        XCTAssertEqual(bubble?.components(separatedBy: "\n").first, String(repeating: "p", count: 40) + "…")
+    }
 }

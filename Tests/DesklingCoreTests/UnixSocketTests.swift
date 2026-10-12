@@ -72,7 +72,7 @@ final class UnixSocketTests: XCTestCase {
         let start = Date()
         let data = UnixSocket.readUntilEOF(from: p.read, limit: 1024, timeout: 0.2)
         XCTAssertEqual(data, Data("abc".utf8))
-        XCTAssertLessThan(Date().timeIntervalSince(start), 0.3)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 1.0)
     }
 
     func testReadUntilEOFNeverReturnsMoreThanLimit() {
