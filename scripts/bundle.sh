@@ -2,6 +2,11 @@
 # Builds a universal Deskling.app into dist/. Usage: scripts/bundle.sh [version]
 set -euo pipefail
 VERSION="${1:-0.0.0}"
+VERSION="${VERSION#v}"
+if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
+  echo "error: invalid version '$VERSION' (expected e.g. 0.1.0)" >&2
+  exit 1
+fi
 cd "$(dirname "$0")/.."
 
 swift build -c release --arch arm64 --arch x86_64
@@ -14,7 +19,9 @@ cp "$BIN/Deskling" "$BIN/deskling-hook" "$APP/Contents/MacOS/"
 sed "s/__VERSION__/$VERSION/g" Resources/Info.plist > "$APP/Contents/Info.plist"
 cp -R Resources/skins "$APP/Contents/Resources/skins"
 
-ICONSET="$(mktemp -d)/AppIcon.iconset"
+ICONSET_ROOT="$(mktemp -d)"
+trap 'rm -rf "$ICONSET_ROOT"' EXIT
+ICONSET="$ICONSET_ROOT/AppIcon.iconset"
 mkdir -p "$ICONSET"
 for size in 16 32 128 256 512; do
   double=$((size * 2))
