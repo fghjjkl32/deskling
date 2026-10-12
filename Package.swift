@@ -7,6 +7,7 @@ let package = Package(
     targets: [
         .target(name: "DesklingCore"),
         .executableTarget(name: "deskling-hook", dependencies: ["DesklingCore"], path: "Sources/deskling-hook"),
+        .executableTarget(name: "Deskling", dependencies: ["DesklingCore"]),
         .testTarget(name: "DesklingCoreTests", dependencies: ["DesklingCore"]),
     ]
 )
