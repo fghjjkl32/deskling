@@ -20,10 +20,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var isBundled: Bool { Bundle.main.bundleIdentifier != nil }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if let identifier = Bundle.main.bundleIdentifier,
-           NSRunningApplication.runningApplications(withBundleIdentifier: identifier).count > 1 {
-            NSApp.terminate(nil)
-            return
+        if let identifier = Bundle.main.bundleIdentifier {
+            let me = ProcessInfo.processInfo.processIdentifier
+            let others = NSRunningApplication.runningApplications(withBundleIdentifier: identifier)
+                .filter { $0.processIdentifier != me }
+                .map { (pid: $0.processIdentifier, launch: $0.launchDate) }
+            let myLaunch = NSRunningApplication(processIdentifier: me)?.launchDate
+            if InstancePolicy.shouldQuit(selfPID: me, selfLaunch: myLaunch, others: others) {
+                NSApp.terminate(nil)
+                return
+            }
         }
         guard let skin = currentSkin() else {
             showAlert(title: text(.missingResources), body: Resources.defaultSkinDirectory.path)
