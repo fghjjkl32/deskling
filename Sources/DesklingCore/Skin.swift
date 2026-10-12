@@ -8,6 +8,7 @@ public enum PetPose: String, CaseIterable {
 public struct SpriteFrames {
     public static let maxDimension = 4096
     public static let maxFrames = 240
+    public static let maxTotalPixels = 64_000_000
     private static let fallbackDelay = 0.1
 
     public let images: [CGImage]
@@ -15,13 +16,16 @@ public struct SpriteFrames {
 
     public var totalDuration: Double { durations.reduce(0, +) }
 
-    public static func load(url: URL) -> SpriteFrames? {
+    public static func load(url: URL, maxTotalPixels: Int = SpriteFrames.maxTotalPixels) -> SpriteFrames? {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
         var images: [CGImage] = []
         var durations: [Double] = []
+        var totalPixels = 0
         for index in 0..<min(CGImageSourceGetCount(source), maxFrames) {
             guard let image = CGImageSourceCreateImageAtIndex(source, index, nil) else { continue }
             guard image.width <= maxDimension, image.height <= maxDimension else { return nil }
+            totalPixels += image.width * image.height
+            guard totalPixels <= maxTotalPixels else { return nil }
             images.append(image)
             durations.append(delay(of: source, at: index))
         }

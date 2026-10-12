@@ -158,4 +158,20 @@ final class SkinTests: XCTestCase {
         XCTAssertEqual(SpriteFrames.load(url: skin.url(for: .walk))?.images.count, 19)
         XCTAssertEqual(SpriteFrames.load(url: skin.url(for: .done))?.images.count, 10)
     }
+
+    func testTotalPixelBudgetRejectsAnimationsThatAreTooLargeInSum() throws {
+        let url = root.appendingPathComponent("budget.png")
+        writeImage(url, frames: 3)
+        XCTAssertNil(SpriteFrames.load(url: url, maxTotalPixels: 40))
+        XCTAssertEqual(SpriteFrames.load(url: url, maxTotalPixels: 48)?.images.count, 3)
+        XCTAssertEqual(SpriteFrames.maxTotalPixels, 64_000_000)
+    }
+
+    func testBundledDefaultSkinImagesAllLoadWithinBudget() throws {
+        let repository = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        for pose in PetPose.allCases {
+            let url = repository.appendingPathComponent("Resources/skins/default/\(pose.rawValue).png")
+            XCTAssertNotNil(SpriteFrames.load(url: url), pose.rawValue)
+        }
+    }
 }
