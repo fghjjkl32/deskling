@@ -43,7 +43,7 @@ public enum Text: CaseIterable {
         .doneMessage: ("작업을 마쳤습니다.", "Finished working."),
         .invalidSettingsTitle: ("settings.json을 읽을 수 없습니다.", "Could not read settings.json."),
         .invalidSettingsBody: (
-            "파일을 수정하지 않았습니다. 아래 설정을 settings.json에 직접 추가해 주세요.",
+            "파일을 수정하지 않았습니다. 아래 설정을 settings.json에 직접 추가해야 합니다.",
             "The file was not changed. Add the settings below to settings.json yourself."
         ),
         .copy: ("복사하기", "Copy"),

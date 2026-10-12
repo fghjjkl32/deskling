@@ -16,6 +16,14 @@ final class StringsTests: XCTestCase {
         }
     }
 
+    func testKoreanSentencesUseFormalPolite() {
+        for text in Text.allCases {
+            let korean = text.string(.korean)
+            guard korean.hasSuffix(".") else { continue }
+            XCTAssertTrue(korean.hasSuffix("니다."), "\(text): \(korean)")
+        }
+    }
+
     func testPoseForState() {
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: false), .idle)
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: true), .walk)
