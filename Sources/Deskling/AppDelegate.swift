@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         try? FileManager.default.createDirectory(at: AppPaths.supportDirectory(), withIntermediateDirectories: true)
         let server = EventServer { [weak self] event in
+            if event.kind == .notification || event.kind == .stop { self?.bubble.clearDismissal() }
             self?.tracker.apply(event, at: Date())
             self?.render()
         }

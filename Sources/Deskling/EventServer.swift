@@ -21,10 +21,8 @@ final class EventServer {
             let client = accept(fd, nil, nil)
             guard client >= 0 else { return }
             defer { close(client) }
-            var timeout = timeval(tv_sec: 1, tv_usec: 0)
-            setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
             var splitter = LineSplitter()
-            var lines = splitter.append(UnixSocket.readAll(from: client, limit: Self.maxPayload))
+            var lines = splitter.append(UnixSocket.readUntilEOF(from: client, limit: Self.maxPayload, timeout: 1.0))
             if let rest = splitter.finish() { lines.append(rest) }
             let events = lines.compactMap(HookEvent.parse(line:))
             guard !events.isEmpty else { return }

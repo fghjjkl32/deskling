@@ -51,6 +51,11 @@ final class BubbleController {
         }
     }
 
+    /// Forgets a click dismissal so the next identical text is shown again.
+    func clearDismissal() {
+        dismissedText = nil
+    }
+
     /// Shows `text` above `anchor`. Passing `nil` hides the bubble and forgets a dismissal.
     func update(text: String?, anchor: NSRect) {
         guard let text else {
