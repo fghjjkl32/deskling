@@ -3,11 +3,12 @@ import DesklingCore
 
 final class PetView: NSView {
     var onDragBegan: (() -> Void)?
-    var onDragMoved: (() -> Void)?
+    var onDragMoved: ((CGFloat) -> Void)?
     var onDragEnded: (() -> Void)?
 
     private let spriteLayer = CALayer()
     private var currentURL: URL?
+    private var currentSpeed = 1.0
     private var facingLeft = false
 
     override init(frame frameRect: NSRect) {
@@ -31,14 +32,15 @@ final class PetView: NSView {
         }
     }
 
-    func show(url: URL, facingLeft: Bool) {
-        if url != currentURL {
+    func show(url: URL, speed: Double = 1, facingLeft: Bool) {
+        if url != currentURL || speed != currentSpeed {
             currentURL = url
+            currentSpeed = speed
             spriteLayer.removeAnimation(forKey: "frames")
             let frames = SpriteFrames.load(url: url)
             withoutAnimation { spriteLayer.contents = frames?.images.first }
             if let frames, frames.images.count > 1 {
-                spriteLayer.add(Self.animation(for: frames), forKey: "frames")
+                spriteLayer.add(Self.animation(for: frames, speed: speed), forKey: "frames")
             }
         }
         if facingLeft != self.facingLeft {
@@ -49,7 +51,7 @@ final class PetView: NSView {
         }
     }
 
-    private static func animation(for frames: SpriteFrames) -> CAKeyframeAnimation {
+    private static func animation(for frames: SpriteFrames, speed: Double) -> CAKeyframeAnimation {
         let animation = CAKeyframeAnimation(keyPath: "contents")
         animation.values = frames.images
         var elapsed = 0.0
@@ -61,6 +63,7 @@ final class PetView: NSView {
         animation.keyTimes = keyTimes
         animation.calculationMode = .discrete
         animation.duration = frames.totalDuration
+        animation.speed = Float(speed)
         animation.repeatCount = .infinity
         animation.isRemovedOnCompletion = false
         return animation
@@ -85,7 +88,7 @@ final class PetView: NSView {
         origin.x += event.deltaX
         origin.y -= event.deltaY
         window.setFrameOrigin(origin)
-        onDragMoved?()
+        onDragMoved?(event.deltaX)
     }
 
     override func mouseUp(with event: NSEvent) {

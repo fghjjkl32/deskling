@@ -21,6 +21,10 @@ public struct WalkModel {
         stop()
     }
 
+    public mutating func face(left: Bool) {
+        facingLeft = left
+    }
+
     public mutating func stop() {
         target = nil
         isWalking = false

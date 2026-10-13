@@ -66,7 +66,9 @@ public enum PetPresentation {
     public static let maxMessageLength = 120
     public static let maxProjectLength = 40
 
-    public static func pose(for state: PetState, isWalking: Bool) -> PetPose {
+    public static func pose(for state: PetState, isWalking: Bool, isHeld: Bool = false, isFalling: Bool = false) -> PetPose {
+        if isHeld { return .drag }
+        if isFalling { return .fall }
         switch state {
         case .idle: return isWalking ? .walk : .idle
         case .working: return .working

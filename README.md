@@ -61,11 +61,14 @@ skins/my-pet/
   working.gif   Claude Code is working
   waiting.gif   Claude Code needs you
   done.gif      Claude Code finished
+  drag.gif      held with the mouse (running)
+  fall.gif      floating down after you let go
   skin.json     optional
 ```
 
 - Each file can be a GIF, an animated PNG, or a still PNG (`.gif` or `.png`).
 - Only `idle` is required. Missing poses use the `idle` image.
+- Without `drag`, the pet runs by playing `walk` at double speed. Without `fall`, it uses the `drag` image.
 - Draw the pet facing right. Deskling flips it when it walks left.
 - `skin.json` can set a display name and a height in points: `{ "name": "My Pet", "height": 120 }`.
 

@@ -2,7 +2,16 @@ import Foundation
 import ImageIO
 
 public enum PetPose: String, CaseIterable {
-    case idle, walk, working, waiting, done
+    case idle, walk, working, waiting, done, drag, fall
+
+    /// Poses to try, in order, when a skin has no image for this one. `idle` is always the last resort.
+    var fallbacks: [PetPose] {
+        switch self {
+        case .drag: return [.walk]
+        case .fall: return [.drag, .walk]
+        default: return []
+        }
+    }
 }
 
 public struct SpriteFrames {
@@ -52,8 +61,20 @@ public struct Skin: Equatable {
     public let directory: URL
     let files: [PetPose: URL]
 
+    /// How much faster a borrowed walk cycle plays so that it reads as running.
+    public static let borrowedWalkSpeed = 2.0
+
     public func url(for pose: PetPose) -> URL {
-        files[pose] ?? files[.idle]!
+        files[resolved(pose)]!
+    }
+
+    /// Animation speed for a pose: a walk cycle standing in for `drag` or `fall` plays faster.
+    public func playbackSpeed(for pose: PetPose) -> Double {
+        pose != .walk && resolved(pose) == .walk ? Self.borrowedWalkSpeed : 1
+    }
+
+    private func resolved(_ pose: PetPose) -> PetPose {
+        ([pose] + pose.fallbacks).first { files[$0] != nil } ?? .idle
     }
 }
 

@@ -26,6 +26,7 @@ final class PetWindowController {
     private var scale: Double
     private var timer: Timer?
     private var dragging = false
+    private var fall: FallModel?
 
     init(skin: Skin, scale: Double, startX: Double?, screenID: Int?) {
         self.skin = skin
@@ -45,8 +46,8 @@ final class PetWindowController {
         panel.contentView = view
         panel.setFrameOrigin(NSPoint(x: x, y: Double(screen?.visibleFrame.minY ?? 0)))
 
-        view.onDragBegan = { [weak self] in self?.dragging = true }
-        view.onDragMoved = { [weak self] in self?.onFrameChanged?() }
+        view.onDragBegan = { [weak self] in self?.grab() }
+        view.onDragMoved = { [weak self] deltaX in self?.dragged(by: deltaX) }
         view.onDragEnded = { [weak self] in self?.drop() }
         apply(skin: skin, scale: scale)
     }
@@ -92,12 +93,19 @@ final class PetWindowController {
         let visible = screen.visibleFrame
         let lower = Double(visible.minX)
         let bounds = lower...max(lower, Double(visible.maxX - panel.frame.width))
-        if display.state == .idle {
+        let floor = Double(visible.minY)
+        var y = floor
+        if var falling = fall {
+            falling.step(dt: dt, floor: floor)
+            fall = falling.hasLanded ? nil : falling
+            y = falling.y
+            walk.clamp(to: bounds)
+        } else if display.state == .idle {
             walk.step(dt: dt, bounds: bounds)
         } else {
             walk.clamp(to: bounds)
         }
-        let origin = NSPoint(x: walk.x, y: Double(visible.minY))
+        let origin = NSPoint(x: walk.x, y: y)
         if origin != panel.frame.origin {
             panel.setFrameOrigin(origin)
             onFrameChanged?()
@@ -105,15 +113,30 @@ final class PetWindowController {
         refresh()
     }
 
+    private func grab() {
+        dragging = true
+        fall = nil
+        walk.stop()
+        refresh()
+    }
+
+    private func dragged(by deltaX: CGFloat) {
+        if deltaX != 0 { walk.face(left: deltaX < 0) }
+        refresh()
+        onFrameChanged?()
+    }
+
     private func drop() {
         dragging = false
         walk.place(x: Double(panel.frame.minX))
+        fall = FallModel(y: Double(panel.frame.minY))
         tick(0)
         onDropped?(walk.x, currentScreen?.displayID)
     }
 
     private func refresh() {
-        let pose = PetPresentation.pose(for: display.state, isWalking: walk.isWalking)
-        view.show(url: skin.url(for: pose), facingLeft: walk.facingLeft)
+        let pose = PetPresentation.pose(for: display.state, isWalking: walk.isWalking,
+                                        isHeld: dragging, isFalling: fall != nil)
+        view.show(url: skin.url(for: pose), speed: skin.playbackSpeed(for: pose), facingLeft: walk.facingLeft)
     }
 }

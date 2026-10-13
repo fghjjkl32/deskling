@@ -89,6 +89,36 @@ final class SkinTests: XCTestCase {
         XCTAssertEqual(skin.url(for: .done).lastPathComponent, "idle.gif")
     }
 
+    func testHeldAndFallingPosesBorrowTheWalkCycleAtRunningSpeed() throws {
+        let directory = try skinDirectory("walker")
+        writeImage(directory.appendingPathComponent("idle.png"))
+        writeImage(directory.appendingPathComponent("walk.png"))
+        let skin = try XCTUnwrap(SkinLoader.load(directory: directory))
+        XCTAssertEqual(skin.url(for: .drag).lastPathComponent, "walk.png")
+        XCTAssertEqual(skin.url(for: .fall).lastPathComponent, "walk.png")
+        XCTAssertEqual(skin.playbackSpeed(for: .drag), Skin.borrowedWalkSpeed)
+        XCTAssertEqual(skin.playbackSpeed(for: .fall), Skin.borrowedWalkSpeed)
+        XCTAssertEqual(skin.playbackSpeed(for: .walk), 1)
+    }
+
+    func testFallingBorrowsTheDragImageAtNormalSpeed() throws {
+        let directory = try skinDirectory("runner")
+        for name in ["idle", "walk", "drag"] { writeImage(directory.appendingPathComponent("\(name).png")) }
+        let skin = try XCTUnwrap(SkinLoader.load(directory: directory))
+        XCTAssertEqual(skin.url(for: .drag).lastPathComponent, "drag.png")
+        XCTAssertEqual(skin.url(for: .fall).lastPathComponent, "drag.png")
+        XCTAssertEqual(skin.playbackSpeed(for: .drag), 1)
+        XCTAssertEqual(skin.playbackSpeed(for: .fall), 1)
+    }
+
+    func testHeldPoseFallsBackToIdleWithoutAWalkCycle() throws {
+        let directory = try skinDirectory("still")
+        writeImage(directory.appendingPathComponent("idle.png"))
+        let skin = try XCTUnwrap(SkinLoader.load(directory: directory))
+        XCTAssertEqual(skin.url(for: .drag).lastPathComponent, "idle.png")
+        XCTAssertEqual(skin.playbackSpeed(for: .drag), 1)
+    }
+
     func testSkinWithoutUsableIdleIsRejected() throws {
         let noIdle = try skinDirectory("no-idle")
         writeImage(noIdle.appendingPathComponent("walk.png"))
@@ -146,14 +176,18 @@ final class SkinTests: XCTestCase {
         XCTAssertEqual(SkinLoader.list(in: root.appendingPathComponent("missing")), [])
     }
 
+    /// The default skin ships no `drag` or `fall` image; both borrow its walk cycle.
+    private static let bundledPoses: [PetPose] = [.idle, .walk, .working, .waiting, .done]
+
     func testBundledDefaultSkinLoadsWithAnimations() throws {
         let repository = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let directory = repository.appendingPathComponent("Resources/skins/default")
         let skin = try XCTUnwrap(SkinLoader.load(directory: directory))
         XCTAssertEqual(skin.name, "Deskling")
-        for pose in PetPose.allCases {
+        for pose in Self.bundledPoses {
             XCTAssertEqual(skin.url(for: pose).lastPathComponent, "\(pose.rawValue).png")
         }
+        XCTAssertEqual(skin.url(for: .drag).lastPathComponent, "walk.png")
         XCTAssertEqual(SpriteFrames.load(url: skin.url(for: .idle))?.images.count, 2)
         XCTAssertEqual(SpriteFrames.load(url: skin.url(for: .walk))?.images.count, 19)
         XCTAssertEqual(SpriteFrames.load(url: skin.url(for: .done))?.images.count, 10)
@@ -169,7 +203,7 @@ final class SkinTests: XCTestCase {
 
     func testBundledDefaultSkinImagesAllLoadWithinBudget() throws {
         let repository = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        for pose in PetPose.allCases {
+        for pose in Self.bundledPoses {
             let url = repository.appendingPathComponent("Resources/skins/default/\(pose.rawValue).png")
             XCTAssertNotNil(SpriteFrames.load(url: url), pose.rawValue)
         }

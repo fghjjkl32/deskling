@@ -27,6 +27,8 @@ final class StringsTests: XCTestCase {
     func testPoseForState() {
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: false), .idle)
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: true), .walk)
+        XCTAssertEqual(PetPresentation.pose(for: .working, isWalking: false, isHeld: true, isFalling: true), .drag)
+        XCTAssertEqual(PetPresentation.pose(for: .waiting, isWalking: false, isFalling: true), .fall)
         XCTAssertEqual(PetPresentation.pose(for: .working, isWalking: true), .working)
         XCTAssertEqual(PetPresentation.pose(for: .waiting, isWalking: false), .waiting)
         XCTAssertEqual(PetPresentation.pose(for: .done, isWalking: false), .done)

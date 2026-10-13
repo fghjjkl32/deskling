@@ -15,6 +15,14 @@ final class WalkModelTests: XCTestCase {
         XCTAssertEqual(model.x, 100 + WalkModel.speed, accuracy: 0.001)
     }
 
+    func testFaceTurnsThePet() {
+        var model = WalkModel(x: 100)
+        model.face(left: true)
+        XCTAssertTrue(model.facingLeft)
+        model.face(left: false)
+        XCTAssertFalse(model.facingLeft)
+    }
+
     func testFacesLeftWhenTargetIsBehind() {
         var model = WalkModel(x: 800)
         model.step(dt: 2, bounds: bounds, random: { _ in 200 })
