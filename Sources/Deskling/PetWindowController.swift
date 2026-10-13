@@ -13,6 +13,7 @@ final class PetWindowController {
     let panel: NSPanel
     var onFrameChanged: (() -> Void)?
     var onDropped: ((Double, Int?) -> Void)?
+    var onInspect: ((NSPoint, NSView) -> Void)?
     var display = PetDisplay(state: .idle, projectName: nil, message: nil) {
         didSet {
             if display.state != .idle { walk.stop() }
@@ -49,6 +50,10 @@ final class PetWindowController {
         view.onDragBegan = { [weak self] in self?.grab() }
         view.onDragMoved = { [weak self] deltaX in self?.dragged(by: deltaX) }
         view.onDragEnded = { [weak self] in self?.drop() }
+        view.onInspect = { [weak self] point in
+            guard let self else { return }
+            self.onInspect?(point, self.view)
+        }
         apply(skin: skin, scale: scale)
     }
 

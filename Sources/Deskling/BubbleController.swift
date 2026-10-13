@@ -55,6 +55,22 @@ final class BubbleController {
         }
     }
 
+    /// The first of several lines is the heading; lines between it and the last one are details.
+    private static func styled(_ text: String) -> NSAttributedString {
+        let lines = text.components(separatedBy: "\n")
+        let result = NSMutableAttributedString()
+        for (index, line) in lines.enumerated() {
+            var attributes: [NSAttributedString.Key: Any] = [.font: NSFont.systemFont(ofSize: 14), .foregroundColor: NSColor.labelColor]
+            if lines.count > 1, index == 0 {
+                attributes[.font] = NSFont.systemFont(ofSize: 14, weight: .semibold)
+            } else if index < lines.count - 1 {
+                attributes[.foregroundColor] = NSColor.secondaryLabelColor
+            }
+            result.append(NSAttributedString(string: index == 0 ? line : "\n" + line, attributes: attributes))
+        }
+        return result
+    }
+
     /// Forgets a click dismissal so the next identical text is shown again.
     func clearDismissal() {
         dismissedText = nil
@@ -75,7 +91,7 @@ final class BubbleController {
         }
         if text != shownText {
             shownText = text
-            label.stringValue = text
+            label.attributedStringValue = Self.styled(text)
         }
         let textSize = label.cell?.cellSize(forBounds: NSRect(x: 0, y: 0, width: Self.maxTextWidth, height: 10_000))
             ?? NSSize(width: Self.maxTextWidth, height: 20)

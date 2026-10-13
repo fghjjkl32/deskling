@@ -56,6 +56,15 @@ final class HookEventTests: XCTestCase {
         XCTAssertEqual(HookEvent.parse(line: line.dropLast())?.kind, .stop)
     }
 
+    func testCompactLineForwardsAndTruncatesThePrompt() throws {
+        let input = try JSONSerialization.data(withJSONObject: [
+            "hook_event_name": "UserPromptSubmit", "session_id": "s1",
+            "prompt": String(repeating: "가", count: 5000),
+        ])
+        let line = try XCTUnwrap(HookEvent.compactLine(from: input, eventOverride: nil))
+        XCTAssertEqual(HookEvent.parse(line: line.dropLast())?.prompt?.count, 300)
+    }
+
     func testCompactLineTruncatesLongMessage() throws {
         let input = try JSONSerialization.data(withJSONObject: [
             "hook_event_name": "Notification", "session_id": "s1",

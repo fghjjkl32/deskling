@@ -46,6 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.preferences.screenID = screenID
         }
         pet.onFrameChanged = { [weak self] in self?.render() }
+        pet.onInspect = { [weak self] point, view in self?.menu?.popUpSessions(at: point, in: view) }
         pet.setHidden(preferences.petHidden)
         pet.start()
         self.pet = pet

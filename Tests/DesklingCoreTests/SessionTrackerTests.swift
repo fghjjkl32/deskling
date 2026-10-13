@@ -8,6 +8,19 @@ final class SessionTrackerTests: XCTestCase {
         HookEvent(kind: kind, sessionID: session, cwd: cwd, message: message, notificationType: type)
     }
 
+    func testLatestPromptBecomesTheSessionTitle() {
+        var tracker = SessionTracker()
+        tracker.apply(HookEvent(kind: .userPromptSubmit, sessionID: "s1", cwd: "/work/app", prompt: "first"), at: start)
+        tracker.apply(HookEvent(kind: .userPromptSubmit, sessionID: "s1", cwd: "/work/app", prompt: "second"), at: start)
+        tracker.apply(HookEvent(kind: .userPromptSubmit, sessionID: "s1", cwd: "/work/app", prompt: "  "), at: start)
+        XCTAssertEqual(tracker.display.title, "second")
+        XCTAssertEqual(tracker.summaries, [SessionSummary(projectName: "app", state: .working, title: "second")])
+        tracker.apply(event(.notification, message: "Need permission"), at: start)
+        XCTAssertEqual(tracker.display, PetDisplay(state: .waiting, projectName: "app", message: "Need permission", title: "second"))
+        tracker.apply(event(.stop), at: start)
+        XCTAssertEqual(tracker.justFinished, PetDisplay(state: .done, projectName: "app", message: nil, title: "second"))
+    }
+
     func testEmptyTrackerIsIdle() {
         XCTAssertEqual(SessionTracker().display, PetDisplay(state: .idle, projectName: nil, message: nil))
     }

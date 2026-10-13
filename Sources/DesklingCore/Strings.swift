@@ -65,6 +65,7 @@ public enum Text: CaseIterable {
 public enum PetPresentation {
     public static let maxMessageLength = 120
     public static let maxProjectLength = 40
+    public static let maxTitleLength = 60
 
     public static func pose(for state: PetState, isWalking: Bool, isHeld: Bool = false, isFalling: Bool = false) -> PetPose {
         if isHeld { return .drag }
@@ -77,6 +78,7 @@ public enum PetPresentation {
         }
     }
 
+    /// The bubble text: an optional project line, an optional title line, then the message, one per line.
     public static func bubble(for display: PetDisplay, language: Language) -> String? {
         let body: String
         switch display.state {
@@ -88,8 +90,19 @@ public enum PetPresentation {
         case .done:
             body = Text.doneMessage.string(language)
         }
-        guard let project = display.projectName, !project.isEmpty else { return body }
-        return "\(truncate(project, limit: maxProjectLength))\n\(body)"
+        var lines: [String] = []
+        if let project = display.projectName, !project.isEmpty {
+            lines.append(truncate(project, limit: maxProjectLength))
+        }
+        if let title = title(display.title) { lines.append(title) }
+        lines.append(body)
+        return lines.joined(separator: "\n")
+    }
+
+    /// A prompt shortened to one line, or `nil` when there is nothing to show.
+    public static func title(_ prompt: String?) -> String? {
+        let text = collapseWhitespace(prompt ?? "")
+        return text.isEmpty ? nil : truncate(text, limit: maxTitleLength)
     }
 
     public static func sessionLine(for summary: SessionSummary, language: Language) -> String {

@@ -4,6 +4,8 @@ A desktop pet for Claude Code on macOS.
 
 Deskling walks along the bottom of your screen and reacts to what Claude Code is doing. When Claude Code asks for permission or finishes a task, the pet tells you with a speech bubble, so you can look away from the terminal.
 
+The bubble names the project folder and the prompt the session is working on. Double-click or right-click the pet to see every Claude Code session and its state. Hold the pet to make it run, and let go in mid-air to watch it float down.
+
 Deskling lives in the menu bar. It has no Dock icon and no window; the pet and its menu are all there is.
 
 ![Deskling showing a speech bubble](docs/images/demo.png)

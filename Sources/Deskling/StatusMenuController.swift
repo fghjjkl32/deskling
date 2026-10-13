@@ -61,13 +61,7 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         add(to: menu, text(current.connected ? .disconnect : .connect), actions.toggleConnection)
         menu.addItem(.separator())
 
-        addLabel(to: menu, text(.sessions))
-        if current.sessions.isEmpty {
-            addLabel(to: menu, text(.noSessions), indented: true)
-        }
-        for session in current.sessions {
-            addLabel(to: menu, PetPresentation.sessionLine(for: session, language: language), indented: true)
-        }
+        addSessions(to: menu, current.sessions)
         menu.addItem(.separator())
 
         let skinMenu = NSMenu()
@@ -93,6 +87,24 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         add(to: menu, text(.quit)) { NSApp.terminate(nil) }
     }
 
+    /// Shows only the session list, next to the pet.
+    func popUpSessions(at point: NSPoint, in view: NSView) {
+        let menu = NSMenu()
+        addSessions(to: menu, state().sessions)
+        menu.popUp(positioning: nil, at: point, in: view)
+    }
+
+    private func addSessions(to menu: NSMenu, _ sessions: [SessionSummary]) {
+        addLabel(to: menu, text(.sessions))
+        if sessions.isEmpty {
+            addLabel(to: menu, text(.noSessions), indented: true)
+        }
+        for session in sessions {
+            let line = PetPresentation.sessionLine(for: session, language: language)
+            addLabel(to: menu, line, detail: PetPresentation.title(session.title), indented: true)
+        }
+    }
+
     private func text(_ text: Text) -> String { text.string(language) }
 
     private func add(to menu: NSMenu, _ title: String, checked: Bool = false, _ handler: @escaping () -> Void) {
@@ -103,11 +115,18 @@ final class StatusMenuController: NSObject, NSMenuDelegate {
         menu.addItem(item)
     }
 
-    private func addLabel(to menu: NSMenu, _ title: String, indented: Bool = false) {
+    private func addLabel(to menu: NSMenu, _ title: String, detail: String? = nil, indented: Bool = false) {
         let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         item.isEnabled = false
         item.indentationLevel = indented ? 1 : 0
         menu.addItem(item)
+        guard let detail else { return }
+        if #available(macOS 14.4, *) {
+            item.subtitle = detail
+        } else {
+            addLabel(to: menu, detail, indented: true)
+            menu.items.last?.indentationLevel = 2
+        }
     }
 
     private func addSubmenu(to menu: NSMenu, _ title: String, _ submenu: NSMenu) {

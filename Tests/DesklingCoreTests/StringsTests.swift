@@ -24,6 +24,22 @@ final class StringsTests: XCTestCase {
         }
     }
 
+    func testBubbleShowsThePromptAsATitleBetweenProjectAndMessage() {
+        let prompt = "  말풍선에\n제목을   추가해 줘 "
+        let done = PetDisplay(state: .done, projectName: "app", message: nil, title: prompt)
+        XCTAssertEqual(PetPresentation.bubble(for: done, language: .korean), "app\n말풍선에 제목을 추가해 줘\n작업을 마쳤습니다.")
+        let waiting = PetDisplay(state: .waiting, projectName: nil, message: "Need permission", title: "fix the build")
+        XCTAssertEqual(PetPresentation.bubble(for: waiting, language: .english), "fix the build\nNeed permission")
+        let blank = PetDisplay(state: .done, projectName: "app", message: nil, title: " \n ")
+        XCTAssertEqual(PetPresentation.bubble(for: blank, language: .english), "app\nFinished working.")
+    }
+
+    func testTitleIsTruncated() {
+        let title = PetPresentation.title(String(repeating: "가", count: 200))
+        XCTAssertEqual(title?.count, PetPresentation.maxTitleLength + 1)
+        XCTAssertNil(PetPresentation.title(nil))
+    }
+
     func testPoseForState() {
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: false), .idle)
         XCTAssertEqual(PetPresentation.pose(for: .idle, isWalking: true), .walk)

@@ -12,20 +12,23 @@ public struct HookEvent: Equatable {
     }
 
     public static let maxMessageLength = 300
-    private static let forwardedKeys = ["hook_event_name", "session_id", "cwd", "message", "notification_type"]
+    private static let forwardedKeys = ["hook_event_name", "session_id", "cwd", "message", "notification_type", "prompt"]
 
     public let kind: Kind
     public let sessionID: String
     public let cwd: String?
     public let message: String?
     public let notificationType: String?
+    /// What the user asked for, sent with `UserPromptSubmit`.
+    public let prompt: String?
 
-    public init(kind: Kind, sessionID: String, cwd: String? = nil, message: String? = nil, notificationType: String? = nil) {
+    public init(kind: Kind, sessionID: String, cwd: String? = nil, message: String? = nil, notificationType: String? = nil, prompt: String? = nil) {
         self.kind = kind
         self.sessionID = sessionID
         self.cwd = cwd
         self.message = message
         self.notificationType = notificationType
+        self.prompt = prompt
     }
 
     public var projectName: String? {
@@ -62,7 +65,8 @@ public struct HookEvent: Equatable {
             sessionID: sessionID,
             cwd: object["cwd"] as? String,
             message: object["message"] as? String,
-            notificationType: object["notification_type"] as? String
+            notificationType: object["notification_type"] as? String,
+            prompt: object["prompt"] as? String
         )
     }
 
@@ -74,8 +78,10 @@ public struct HookEvent: Equatable {
         for key in forwardedKeys {
             if let value = object[key] as? String { output[key] = value }
         }
-        if let message = output["message"] as? String, message.count > maxMessageLength {
-            output["message"] = String(message.prefix(maxMessageLength))
+        for key in ["message", "prompt"] {
+            if let text = output[key] as? String, text.count > maxMessageLength {
+                output[key] = String(text.prefix(maxMessageLength))
+            }
         }
         guard output["hook_event_name"] != nil, output["session_id"] != nil,
               var line = try? JSONSerialization.data(withJSONObject: output, options: [.sortedKeys])

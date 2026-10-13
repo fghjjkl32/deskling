@@ -5,6 +5,8 @@ final class PetView: NSView {
     var onDragBegan: (() -> Void)?
     var onDragMoved: ((CGFloat) -> Void)?
     var onDragEnded: (() -> Void)?
+    /// A double-click or a right-click, at a point in this view.
+    var onInspect: ((NSPoint) -> Void)?
 
     private let spriteLayer = CALayer()
     private var currentURL: URL?
@@ -93,5 +95,10 @@ final class PetView: NSView {
 
     override func mouseUp(with event: NSEvent) {
         onDragEnded?()
+        if event.clickCount == 2 { onInspect?(convert(event.locationInWindow, from: nil)) }
+    }
+
+    override func rightMouseDown(with event: NSEvent) {
+        onInspect?(convert(event.locationInWindow, from: nil))
     }
 }
