@@ -40,7 +40,7 @@ class Deskling {
     supportDirectory: paths.supportDirectory,
     bundledHook: p.join(_appDirectory, HookInstaller.helperName),
   );
-  late final wsl = WslService(installedHook: installer.installedHook);
+  late final wsl = WslService(installedHook: installer.installedHook, isConnected: installer.isConnected);
   late final ConnectionTarget windowsTarget =
       ConnectionTarget(label: 'Windows', settingsPath: paths.claudeSettings, hookCommand: installer.installedHook);
 
@@ -149,8 +149,7 @@ class Deskling {
     return TrayState(
       connected: installer.isConnected(windowsTarget),
       wsl: distros
-          ?.map((d) => WslItem(d.name,
-              connected: d.target != null && installer.isConnected(d.target!), readable: d.target != null))
+          ?.map((d) => WslItem(d.name, connected: d.connected, readable: d.target != null))
           .toList(),
       sessions: tracker.summaries,
       skins: [SkinItem(null, _t(Txt.defaultSkin)), ...userSkins],
@@ -166,7 +165,7 @@ class Deskling {
         toggleConnection: () => unawaited(_toggle(windowsTarget)),
         toggleWsl: (name) {
           final target = wsl.latest?.where((d) => d.name == name).firstOrNull?.target;
-          if (target != null) unawaited(_toggle(target));
+          if (target != null) unawaited(_toggle(target).then((_) => wsl.refresh()));
         },
         selectSkin: (path) {
           preferences.skinPath = path;

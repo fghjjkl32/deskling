@@ -38,6 +38,24 @@ void main() {
     await server.stop();
   });
 
+  test('stopping removes our endpoint file but not a newer one', () async {
+    final file = p.join(root.path, 'endpoint.json');
+    final first = EventServer((_) {});
+    await first.start(file);
+    await first.stop();
+    expect(File(file).existsSync(), false);
+
+    final older = EventServer((_) {});
+    await older.start(file);
+    final newer = EventServer((_) {});
+    await newer.start(file);
+    final newest = File(file).readAsStringSync();
+    await older.stop();
+    expect(File(file).readAsStringSync(), newest);
+    await newer.stop();
+    expect(File(file).existsSync(), false);
+  });
+
   test('a connection that never finishes is closed after a second', () async {
     final server = EventServer((_) {});
     final file = p.join(root.path, 'endpoint.json');

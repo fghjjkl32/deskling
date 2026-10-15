@@ -21,6 +21,7 @@ void main() {
       expect(paths.skinsDirectory, r'C:\Users\Me\AppData\Roaming\Deskling\skins');
       expect(paths.endpointFile, r'C:\Users\Me\AppData\Roaming\Deskling\endpoint.json');
       expect(paths.installedHook, r'C:\Users\Me\AppData\Roaming\Deskling\deskling-hook.exe');
+      expect(paths.instanceLock, r'C:\Users\Me\AppData\Roaming\Deskling\instance.lock');
       expect(paths.claudeSettings, r'C:\Users\Me\.claude\settings.json');
     });
 
@@ -140,6 +141,19 @@ void main() {
         ..writeAsStringSync('{ broken');
       expect(() => installer.disconnect(target), throwsA(isA<InvalidSettingsException>()));
       expect(settings().readAsStringSync(), '{ broken');
+    });
+
+    test('an unreadable settings.json is never overwritten', () async {
+      final utf16 = [0xFF, 0xFE, for (final unit in '{"model":"opus"}'.codeUnits) ...[unit & 0xFF, unit >> 8]];
+      settings()
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(utf16);
+      expect(() => installer.isConnected(target), returnsNormally);
+      expect(installer.isConnected(target), false);
+      await expectLater(installer.connect(target), throwsA(isA<InvalidSettingsException>()));
+      expect(() => installer.disconnect(target), throwsA(isA<InvalidSettingsException>()));
+      expect(settings().readAsBytesSync(), utf16);
+      expect(backup().existsSync(), false);
     });
 
     test('copyHelper replaces an older copy and leaves no temporary files', () async {

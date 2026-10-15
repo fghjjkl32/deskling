@@ -153,6 +153,11 @@ class PetController extends ChangeNotifier {
 
   void _tick(double dt) {
     if (_hidden) return;
+    // A fast flick can lose the button-up event; end the drag once the button is really up.
+    if (_dragging && !Native.isLeftButtonDown) {
+      drop();
+      return;
+    }
     var monitor = _currentMonitor();
     if (monitor.scale != _scale) {
       // Crossing onto a monitor with another scale: keep the pixel position, restart the walk from it.
@@ -204,8 +209,11 @@ class PetController extends ChangeNotifier {
       _appliedWindow = layout.window;
     }
     if (!listEquals(layout.clickable, _appliedClickable)) {
-      native.setClickableArea(layout.clickable.isEmpty ? null : layout.clickable,
-          cornerRadius: (Bubble.cornerRadius * 2 * scale).round());
+      // The pet keeps square corners so its feet and ears are never cut; only the bubble is rounded.
+      final corner = (Bubble.cornerRadius * 2 * scale).round();
+      native.setClickableArea(layout.clickable.isEmpty
+          ? null
+          : [for (final (index, rect) in layout.clickable.indexed) (rect, index == 0 ? 0 : corner)]);
       _appliedClickable = layout.clickable;
     }
     notifyListeners();

@@ -85,8 +85,9 @@ class PetLayout {
         clickable: const [],
       );
     }
-    final width = px(bubbleWidth);
-    final height = px(bubbleHeight);
+    // Rounding down could take a pixel from measured text and wrap it onto a line the region then cuts off.
+    final width = (bubbleWidth * scale).ceil();
+    final height = (bubbleHeight * scale).ceil();
     final margin = px(screenMargin);
     final centered = pet.left + pet.width ~/ 2 - width ~/ 2;
     final left = max(work.left + margin, min(centered, work.right - width - margin));

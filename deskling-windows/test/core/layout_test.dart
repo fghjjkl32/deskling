@@ -37,6 +37,13 @@ void main() {
     expect(top.window.top, 4);
   });
 
+  test('the bubble never gets fewer pixels than it measured', () {
+    final layout = PetLayout.compute(
+        work: work, scale: 1.25, petOrigin: const Point(500, 900), petWidth: 96, petHeight: 96, bubbleWidth: 100.1, bubbleHeight: 40.1);
+    expect(layout.bubble!.width, greaterThanOrEqualTo(100.1));
+    expect(layout.bubble!.height, greaterThanOrEqualTo(40.1));
+  });
+
   test('scale converts logical sizes to pixels and back', () {
     final layout = PetLayout.compute(
         work: const ScreenRect(-1920, 0, 0, 1040),

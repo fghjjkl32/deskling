@@ -42,6 +42,10 @@ jobs:
           dart compile exe bin/deskling_hook.dart -o "$release/deskling-hook.exe"
           New-Item -ItemType Directory -Force -Path dist/Deskling | Out-Null
           Copy-Item -Recurse -Force "$release/*" dist/Deskling
+          # Flutter's Windows deployment guide: ship the Visual C++ runtime next to the app.
+          foreach ($dll in "msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll") {
+            Copy-Item "$env:WINDIR\System32\$dll" dist/Deskling
+          }
           Compress-Archive -Path dist/Deskling -DestinationPath "dist/Deskling-windows-$version.zip" -Force
       - uses: actions/upload-artifact@v4
         with:

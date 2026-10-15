@@ -8,11 +8,15 @@ import 'app/deskling.dart';
 import 'app/native.dart';
 import 'app/pet_view.dart';
 import 'app/preferences.dart';
+import 'core/instance_lock.dart';
+import 'core/paths.dart';
 import 'core/strings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!Native.claimSingleInstance()) exit(0);
+  // Held for the life of the process; a second Deskling quits at once.
+  final lock = InstanceLock.tryAcquire(AppPaths.current().instanceLock);
+  if (lock == null) exit(0);
 
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow(
@@ -31,7 +35,10 @@ Future<void> main() async {
   await windowManager.setBackgroundColor(Colors.transparent);
 
   final native = Native.find();
-  if (native == null) exit(1);
+  if (native == null) {
+    Native.alert('Deskling', 'The pet window could not be found.');
+    exit(1);
+  }
   native.makeToolWindow();
 
   final preferences = await Preferences.load();

@@ -30,7 +30,13 @@ class HookInstaller {
 
   static String backupPath(String settingsPath) => p.join(p.dirname(settingsPath), 'settings.json.deskling-backup');
 
-  bool isConnected(ConnectionTarget target) => HookSettings.isInstalled(_read(target.settingsPath));
+  bool isConnected(ConnectionTarget target) {
+    try {
+      return HookSettings.isInstalled(_read(target.settingsPath));
+    } on InvalidSettingsException {
+      return false;
+    }
+  }
 
   /// Copies the helper through a temporary file. A running hook can lock the old copy for a moment, so the
   /// final rename is retried before giving up; a failure keeps the previous helper.
@@ -73,12 +79,15 @@ class HookInstaller {
     _writeAtomically(_writePath(target.settingsPath), stripped);
   }
 
+  /// Null only when the file does not exist. A file that cannot be read or is not UTF-8 (a UTF-16 file from
+  /// PowerShell, a locked file) must never be treated as missing, or connecting would replace it.
   static String? _read(String path) {
     final file = File(path);
+    if (!file.existsSync()) return null;
     try {
-      return file.existsSync() ? file.readAsStringSync() : null;
+      return file.readAsStringSync();
     } on FileSystemException {
-      return null;
+      throw const InvalidSettingsException();
     }
   }
 

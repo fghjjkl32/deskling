@@ -12,6 +12,7 @@ class EventServer {
 
   final void Function(HookEvent event) onEvent;
   ServerSocket? _server;
+  String? _endpointFile;
   late final String _token = Endpoint.newToken();
 
   Future<bool> start(String endpointFile) async {
@@ -24,6 +25,7 @@ class EventServer {
       final temporary = File('$endpointFile.tmp');
       temporary.writeAsStringSync(Endpoint(port: server.port, token: _token).encode(), flush: true);
       temporary.renameSync(endpointFile);
+      _endpointFile = endpointFile;
       return true;
     } on Object catch (error) {
       stderr.writeln('Deskling: could not start the event server: $error');
@@ -31,7 +33,17 @@ class EventServer {
     }
   }
 
-  Future<void> stop() async => _server?.close();
+  /// Closes the socket and removes endpoint.json if it is still ours, so hooks stop trying to connect.
+  Future<void> stop() async {
+    await _server?.close();
+    final path = _endpointFile;
+    if (path == null) return;
+    try {
+      if (Endpoint.read(path)?.token == _token) File(path).deleteSync();
+    } on FileSystemException {
+      // Another instance may have replaced or removed it already.
+    }
+  }
 
   void _handle(Socket socket) {
     final splitter = EventLineSplitter();

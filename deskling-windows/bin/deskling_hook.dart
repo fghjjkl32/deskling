@@ -7,6 +7,10 @@ import 'package:deskling/core/paths.dart';
 const _inputLimit = 16 * 1024 * 1024;
 const _timeout = Duration(seconds: 1);
 
+/// A live loopback connect takes well under a millisecond. Windows retries a refused one for about two seconds,
+/// so a short limit keeps hooks fast when the app was closed without cleaning up.
+const _connectTimeout = Duration(milliseconds: 300);
+
 /// Claude Code reads a hook's exit code and stdout, so this always exits 0 and prints nothing.
 Future<void> main(List<String> arguments) async {
   try {
@@ -18,10 +22,10 @@ Future<void> main(List<String> arguments) async {
       token: endpoint?.token,
     );
     if (endpoint != null && line != null) {
-      final socket = await Socket.connect(InternetAddress.loopbackIPv4, endpoint.port, timeout: _timeout);
+      final socket = await Socket.connect(InternetAddress.loopbackIPv4, endpoint.port, timeout: _connectTimeout);
       socket.add(line);
-      await socket.flush().timeout(_timeout);
-      await socket.close().timeout(_timeout);
+      await socket.flush().timeout(_connectTimeout);
+      await socket.close().timeout(_connectTimeout);
     }
   } on Object {
     // The pet is optional; Claude Code must never notice a failure here.

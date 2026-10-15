@@ -1,27 +1,32 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import '../core/hook_installer.dart';
 import '../core/paths.dart';
 
 /// A WSL distribution and, when it answered, the target to connect.
 class WslDistro {
-  const WslDistro(this.name, this.target);
+  const WslDistro(this.name, this.target, {this.connected = false});
 
   final String name;
 
   /// Null when the distribution did not answer in time.
   final ConnectionTarget? target;
+
+  /// Read during the background scan: touching \\wsl\$ can start a stopped distribution and take seconds.
+  final bool connected;
 }
 
 /// Reads the installed distributions in the background so the tray menu never waits on wsl.exe.
 class WslService {
-  WslService({required this.installedHook});
+  WslService({required this.installedHook, required this.isConnected});
 
   static const commandTimeout = Duration(seconds: 3);
 
   final String installedHook;
+  final bool Function(ConnectionTarget target) isConnected;
 
   /// Null until the first scan finishes; empty when WSL is missing.
   List<WslDistro>? latest;
@@ -37,9 +42,15 @@ class WslService {
     }
     final names = Wsl.parseDistributions(list as List<int>);
     final hookCommand = await _hookCommand(names);
-    latest = [
-      for (final name in names) WslDistro(name, await _target(name, hookCommand)),
-    ];
+    final distros = <WslDistro>[];
+    // A local copy keeps `this` (and its pending Future) out of the closure sent to the isolate.
+    final check = isConnected;
+    for (final name in names) {
+      final target = await _target(name, hookCommand);
+      final connected = target != null && await Isolate.run(() => check(target));
+      distros.add(WslDistro(name, target, connected: connected));
+    }
+    latest = distros;
   }
 
   /// `wslpath` knows custom automount roots; the default layout is the fallback.
