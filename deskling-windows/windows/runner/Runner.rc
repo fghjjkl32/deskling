@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "io.github.fghjjkl32" "\0"
-            VALUE "FileDescription", "deskling" "\0"
+            VALUE "CompanyName", "fghjjkl32" "\0"
+            VALUE "FileDescription", "Deskling" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "deskling" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 io.github.fghjjkl32. All rights reserved." "\0"
-            VALUE "OriginalFilename", "deskling.exe" "\0"
-            VALUE "ProductName", "deskling" "\0"
+            VALUE "InternalName", "Deskling" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 fghjjkl32. MIT License." "\0"
+            VALUE "OriginalFilename", "Deskling.exe" "\0"
+            VALUE "ProductName", "Deskling" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
