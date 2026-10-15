@@ -15,7 +15,7 @@ class WslDistro {
   /// Null when the distribution did not answer in time.
   final ConnectionTarget? target;
 
-  /// Read during the background scan: touching \\wsl\$ can start a stopped distribution and take seconds.
+  /// Read during the background scan: touching `\\wsl$` can start a stopped distribution and take seconds.
   final bool connected;
 }
 
