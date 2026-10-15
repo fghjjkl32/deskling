@@ -1,0 +1,50 @@
+name: Windows
+
+on:
+  # No path filter on push: a brand-new branch such as windows-preview must build on its first push.
+  push:
+    branches: [main, windows-preview]
+  pull_request:
+    paths: ["deskling-windows/**"]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: deskling-windows
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+      - run: flutter pub get
+      - run: dart analyze --fatal-infos
+      - run: flutter test
+      - name: Build and zip
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}".TrimStart('v')
+          if (-not $version) { $version = "0.0.0-preview" }
+          $buildName = $version -replace '-.*$', ''
+          flutter build windows --release --build-name $buildName
+          $release = "build/windows/x64/runner/Release"
+          dart compile exe bin/deskling_hook.dart -o "$release/deskling-hook.exe"
+          New-Item -ItemType Directory -Force -Path dist/Deskling | Out-Null
+          Copy-Item -Recurse -Force "$release/*" dist/Deskling
+          Compress-Archive -Path dist/Deskling -DestinationPath "dist/Deskling-windows-$version.zip" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deskling-windows
+          path: deskling-windows/dist/*.zip
+          if-no-files-found: error

@@ -52,6 +52,19 @@ Click a speech bubble to dismiss it. Deskling listens on a Unix socket in `~/Lib
 
 If you delete the app without disconnecting, the hooks stay in `settings.json` and fail on every Claude Code event. To recover, reinstall Deskling and choose **Disconnect**, or open `settings.json` and remove every hook entry whose command contains `deskling-hook`.
 
+## Windows
+
+Download `Deskling-windows-<version>.zip` from [Releases](https://github.com/fghjjkl32/deskling/releases), unzip it anywhere, and run `Deskling.exe` in the `Deskling` folder. Deskling is not signed, so Windows shows "Windows protected your PC" the first time. Choose **More info**, then **Run anyway**.
+
+The pet walks along the taskbar, and its menu is the paw icon in the notification area (click **^** if it is hidden).
+
+- **Connect to Claude Code** adds the hooks to `%USERPROFILE%\.claude\settings.json`, with the same rules as on macOS: your other hooks stay, a backup is saved as `settings.json.deskling-backup`, and **Disconnect** removes only Deskling's entries.
+- **WSL** lists your WSL distributions. Connect each one where you run Claude Code. Its hooks call the same `deskling-hook.exe` through `/mnt/c/...`.
+- Custom skins go in `%APPDATA%\Deskling\skins\`. Skin folders from the Mac version work as they are.
+- Double-click or right-click the pet to see your sessions.
+
+Before deleting the folder, choose **Disconnect** for Windows and every WSL distribution you connected.
+
 ## Custom skins
 
 Choose **Skin > Open Skins Folder** from the menu, create a folder, and put your images in it:
