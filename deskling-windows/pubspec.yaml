@@ -1,0 +1,29 @@
+name: deskling
+description: "A desktop pet for Claude Code on Windows."
+publish_to: 'none'
+version: 0.2.0
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  window_manager: ^0.5.2
+  tray_manager: ^0.5.3
+  shared_preferences: ^2.5.6
+  win32: ^5.15.0
+  win32_registry: ^2.1.0
+  ffi: ^2.2.0
+  image: ^4.12.0
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/tray.ico
+    - assets/skins/default/
