@@ -205,8 +205,7 @@ class PetController extends ChangeNotifier {
     );
     _layout = layout;
     if (layout.window != _appliedWindow) {
-      native.setFrame(layout.window);
-      _appliedWindow = layout.window;
+      if (native.setFrame(layout.window)) _appliedWindow = layout.window;
     }
     if (!listEquals(layout.clickable, _appliedClickable)) {
       // The pet keeps square corners so its feet and ears are never cut; only the bubble is rounded.

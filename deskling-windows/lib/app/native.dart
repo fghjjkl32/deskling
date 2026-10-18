@@ -56,8 +56,12 @@ class Native {
     SetWindowLongPtr(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE);
   }
 
-  void setFrame(ScreenRect frame) {
-    SetWindowPos(hwnd, 0, frame.left, frame.top, frame.width, frame.height, _swpFlags);
+  /// Returns false when only the position could be applied: Flutter keeps drawing at the old size after a
+  /// resize while the window is hidden, which squeezes the pet and cuts off its head, so the size waits until it is shown.
+  bool setFrame(ScreenRect frame) {
+    final visible = IsWindowVisible(hwnd) != FALSE;
+    SetWindowPos(hwnd, 0, frame.left, frame.top, frame.width, frame.height, _swpFlags | (visible ? 0 : SWP_NOSIZE));
+    return visible;
   }
 
   /// Limits clicks (and drawing) to these rectangles; the rest of the window lets clicks through.
