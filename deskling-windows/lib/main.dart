@@ -8,15 +8,17 @@ import 'app/deskling.dart';
 import 'app/native.dart';
 import 'app/pet_view.dart';
 import 'app/preferences.dart';
-import 'core/instance_lock.dart';
-import 'core/paths.dart';
 import 'core/strings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Held for the life of the process; a second Deskling quits at once.
-  final lock = InstanceLock.tryAcquire(AppPaths.current().instanceLock);
-  if (lock == null) exit(0);
+  final locales = ui.PlatformDispatcher.instance.locales.map((locale) => locale.toLanguageTag()).toList();
+  final language = Language.current(locales);
+  // A second Deskling says so and quits, so a new download is not silently ignored.
+  if (!Native.claimSingleInstance()) {
+    Native.alert('Deskling', Txt.alreadyRunning.of(language));
+    exit(0);
+  }
 
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow(
@@ -42,8 +44,7 @@ Future<void> main() async {
   native.makeToolWindow();
 
   final preferences = await Preferences.load();
-  final locales = ui.PlatformDispatcher.instance.locales.map((locale) => locale.toLanguageTag()).toList();
-  final app = Deskling(native: native, preferences: preferences, language: Language.current(locales));
+  final app = Deskling(native: native, preferences: preferences, language: language);
   if (!await app.start()) exit(1);
   if (!preferences.petHidden) await windowManager.show(inactive: true);
 

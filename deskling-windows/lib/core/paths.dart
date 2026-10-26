@@ -20,7 +20,6 @@ class AppPaths {
   String get skinsDirectory => _windows.join(supportDirectory, 'skins');
   String get endpointFile => _windows.join(supportDirectory, 'endpoint.json');
   String get installedHook => _windows.join(supportDirectory, 'deskling-hook.exe');
-  String get instanceLock => _windows.join(supportDirectory, 'instance.lock');
 
   String get claudeSettings {
     final custom = environment['CLAUDE_CONFIG_DIR'];

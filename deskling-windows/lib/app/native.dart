@@ -28,6 +28,11 @@ final _createRoundRectRgn = _gdi32.lookupFunction<IntPtr Function(Int32, Int32, 
 final _combineRgn =
     _gdi32.lookupFunction<Int32 Function(IntPtr, IntPtr, IntPtr, Int32), int Function(int, int, int, int)>('CombineRgn');
 
+final _kernel32 = DynamicLibrary.open('kernel32.dll');
+
+final _createMutex = _kernel32.lookupFunction<IntPtr Function(Pointer, Int32, Pointer<Utf16>),
+    int Function(Pointer, int, Pointer<Utf16>)>('CreateMutexW');
+
 const _rgnOr = 2;
 const _swpFlags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
 
@@ -79,6 +84,20 @@ class Native {
     }
     // The system owns the region after this call, so it is not deleted here.
     SetWindowRgn(hwnd, region, TRUE);
+  }
+
+  /// Claims this app's named mutex for the life of the process; false when another Deskling holds it.
+  /// Windows releases the mutex when the owner ends, even after a crash.
+  static bool claimSingleInstance() {
+    final name = r'Local\Deskling.SingleInstance'.toNativeUtf16();
+    try {
+      final mutex = _createMutex(nullptr, TRUE, name);
+      if (mutex == 0) return true;
+      // The first instance owns the mutex from creation, so its own wait succeeds; a later one times out.
+      return WaitForSingleObject(mutex, 0) != WAIT_TIMEOUT;
+    } finally {
+      free(name);
+    }
   }
 
   static Point<int> cursor() {

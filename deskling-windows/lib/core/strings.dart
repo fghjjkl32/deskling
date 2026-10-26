@@ -46,6 +46,10 @@ enum Txt {
   ),
   connectFailed('Claude Code와 연결하지 못했습니다.', 'Could not connect to Claude Code.'),
   loginItemFailed('로그인 항목을 바꾸지 못했습니다.', 'Could not change the login item.'),
+  alreadyRunning(
+    'Deskling이 이미 실행 중입니다. 새로 받은 버전을 쓰려면 작업 표시줄 트레이의 Deskling 메뉴에서 종료한 다음 다시 실행하면 됩니다.',
+    'Deskling is already running. To use a newly downloaded version, quit it from its tray menu first, then start it again.',
+  ),
   missingResources('기본 펫 그림을 찾을 수 없습니다.', 'The default pet images are missing.');
 
   const Txt(this.korean, this.english);

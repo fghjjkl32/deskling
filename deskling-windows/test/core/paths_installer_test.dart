@@ -21,7 +21,6 @@ void main() {
       expect(paths.skinsDirectory, r'C:\Users\Me\AppData\Roaming\Deskling\skins');
       expect(paths.endpointFile, r'C:\Users\Me\AppData\Roaming\Deskling\endpoint.json');
       expect(paths.installedHook, r'C:\Users\Me\AppData\Roaming\Deskling\deskling-hook.exe');
-      expect(paths.instanceLock, r'C:\Users\Me\AppData\Roaming\Deskling\instance.lock');
       expect(paths.claudeSettings, r'C:\Users\Me\.claude\settings.json');
     });
 
